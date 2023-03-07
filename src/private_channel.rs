@@ -1,8 +1,12 @@
 use serenity::{prelude::*, model::{prelude::*, Permissions}};
 
+const PRIVATE_CATEGORY: &str = "Privé";
 
+#[derive(Debug)]
 pub enum CreatePrivateChannelError {
-    NoGuild
+    NoGuild,
+    ImpossibleToCreateChannel(serenity::Error),
+    ImpossibleToCreateMessage(serenity::Error),
 }
 
 pub async fn create_private_channel(ctx: &Context, add_reaction: &Reaction) -> Result<(), CreatePrivateChannelError> {
@@ -21,36 +25,49 @@ pub async fn create_private_channel(ctx: &Context, add_reaction: &Reaction) -> R
     // Get the user
     let user = add_reaction.user(&ctx.http).await.unwrap();
 
-    let user_display_name = user.name.clone() + "-" + &user.discriminator.to_string();
+    let user_display_name = user.name.clone() + "-" + &format!("{:04}", user.discriminator);
 
     // Get or create a category
     // Check if the category exists
     let channels = guild.channels(&ctx.http).await.unwrap();
-    let category = channels.iter().find(|c| c.1.name == "Private Channels");
+    let category = channels.iter().find(|c| c.1.name == PRIVATE_CATEGORY);
     let category = if let Some((_, category)) = category {
         category.clone()
     } else {
         let category = guild.create_channel(&ctx.http, |c| {
-            c.name("Private Channels")
+            c.name(PRIVATE_CATEGORY)
             .kind(ChannelType::Category)
         }).await.unwrap();
         category.clone()
     };
 
-
-
-
+    // Create a private text channel
     let channel = guild.create_channel(&ctx.http, |c| {
+        let permissions = vec![PermissionOverwrite {
+            allow: Permissions::VIEW_CHANNEL,
+            deny: Permissions::SEND_TTS_MESSAGES,
+            kind: PermissionOverwriteType::Member(UserId(user.id.0)),
+        },
+        PermissionOverwrite {
+            allow: Permissions::VIEW_CHANNEL,
+            deny: Permissions::SEND_TTS_MESSAGES,
+            kind: PermissionOverwriteType::Role(RoleId(guild.id.0)),
+        }];
         c.name(format!("{user_display_name}-private"))
-        .category(category.id)
-        .kind(ChannelType::Text)
+                .category(category.id)
+                .kind(ChannelType::Text)
+                .permissions(permissions)
         
-    }).await.unwrap();
+    }).await;
 
-    // Add the user to the channel and make it private
-    // Create the permission overwrite
+    let channel = match channel {
+        Ok(channel) => channel,
+        Err(e) => return Err(ImpossibleToCreateChannel(e)),
+    };
 
-   
+    // Send a message to the user
+    channel.say(&ctx.http, format!("Salut {user_name} !", user_name = user.name)).await.map_err(ImpossibleToCreateMessage)?;
+
 
     Ok(())
 }
