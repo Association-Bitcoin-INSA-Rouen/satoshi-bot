@@ -40,19 +40,25 @@ pub async fn create_private_channel(ctx: &Context, add_reaction: &Reaction) -> R
         }).await.unwrap();
         category.clone()
     };
-
     // Create a private text channel
     let channel = guild.create_channel(&ctx.http, |c| {
-        let permissions = vec![PermissionOverwrite {
-            allow: Permissions::VIEW_CHANNEL,
-            deny: Permissions::SEND_TTS_MESSAGES,
-            kind: PermissionOverwriteType::Member(UserId(user.id.0)),
-        },
-        PermissionOverwrite {
-            allow: Permissions::VIEW_CHANNEL,
-            deny: Permissions::SEND_TTS_MESSAGES,
-            kind: PermissionOverwriteType::Role(RoleId(guild.id.0)),
-        }];
+        let permissions = vec![
+            PermissionOverwrite {
+                allow: Permissions::empty(),
+                deny: Permissions::VIEW_CHANNEL,
+                kind: PermissionOverwriteType::Role(RoleId(guild.id.0)),
+            },
+            PermissionOverwrite {
+                allow: Permissions::SEND_MESSAGES | Permissions::VIEW_CHANNEL,
+                deny: Permissions::empty(),
+                kind: PermissionOverwriteType::Member(UserId(user.id.0)),
+            },
+            PermissionOverwrite {
+                allow: Permissions::SEND_MESSAGES | Permissions::VIEW_CHANNEL,
+                deny: Permissions::empty(),
+                kind: PermissionOverwriteType::Member(ctx.cache.current_user_id()),       
+            },
+        ];
         c.name(format!("{user_display_name}-private"))
                 .category(category.id)
                 .kind(ChannelType::Text)
@@ -60,14 +66,16 @@ pub async fn create_private_channel(ctx: &Context, add_reaction: &Reaction) -> R
         
     }).await;
 
+
+
     let channel = match channel {
         Ok(channel) => channel,
         Err(e) => return Err(ImpossibleToCreateChannel(e)),
     };
-
+    
     // Send a message to the user
     channel.say(&ctx.http, format!("Salut {user_name} !", user_name = user.name)).await.map_err(ImpossibleToCreateMessage)?;
-
+    
 
     Ok(())
 }

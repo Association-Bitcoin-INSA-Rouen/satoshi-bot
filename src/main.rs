@@ -15,14 +15,15 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn reaction_add(&self, ctx: Context, add_reaction: Reaction) {
-        println!("Reaction added {}", add_reaction.emoji);
         if let ReactionType::Unicode(code) = add_reaction.clone().emoji {
             match code.as_str() {
                 "💬" => {
                     if let Err(err) = private_channel::create_private_channel(&ctx, &add_reaction).await {
                         println!("Private channel created error: {:?}", err);
+                    } else {
+                        println!("Private channel created");
                     }
-                    
+                     
                 },
                 _ => (),
             }    
