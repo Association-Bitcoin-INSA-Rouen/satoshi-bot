@@ -9,7 +9,7 @@ pub enum CreatePrivateChannelError {
     ImpossibleToCreateMessage(serenity::Error),
 }
 
-fn contains_user(overwrites: &Vec<PermissionOverwrite>, user_id: UserId) -> bool {
+fn contains_user(overwrites: &[PermissionOverwrite], user_id: UserId) -> bool {
     overwrites.iter().any(|o| {
         if let PermissionOverwriteType::Member(id) = o.kind {
             id == user_id
@@ -92,7 +92,10 @@ pub async fn create_private_channel(ctx: &Context, add_reaction: &Reaction) -> R
     };
     
     // Send a message to the user
+    #[cfg(feature = "debug")]
     let admin_string = config::CONFIG.admins().iter().map(|id| format!("<@{id}>")).collect::<Vec<String>>().join(", ");
+    #[cfg(not(feature = "debug"))]
+    let admin_string = config::CONFIG.admins().iter().map(|id| format!("<{id}>")).collect::<Vec<String>>().join(", ");
     channel.say(&ctx.http, format!("Salut {user_name}, tu peux maintenant discuter en privé avec {admin_string} !", user_name = user.name)).await.map_err(ImpossibleToCreateMessage)?;
     
 
