@@ -1,5 +1,3 @@
-use std::env;
-
 use config::CONFIG;
 use serenity::async_trait;
 use serenity::model::prelude::{Reaction, ReactionType};
@@ -39,9 +37,9 @@ async fn main() {
         /*.configure(|c| c.prefix("!")) // set the bot's prefix to "!"
         .group(&GENERAL_GROUP); */
 
-    CONFIG.clone();
+    
     // Login with a bot token from the environment
-    let token = env::var("DISCORD_TOKEN").expect("No token provided");
+    let token = CONFIG.token();
     let intents = GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT | GatewayIntents::GUILD_MESSAGE_REACTIONS;
     let mut client = Client::builder(token, intents)
         .event_handler(Handler)
@@ -51,7 +49,7 @@ async fn main() {
 
     // start listening for events by starting a single shard
     if let Err(why) = client.start().await {
-        println!("An error occurred while running the client: {why:?}");
+        println!("An error occurred while running the client. Be sure you have specified a correct token: {why:?}");
     }
 }
 

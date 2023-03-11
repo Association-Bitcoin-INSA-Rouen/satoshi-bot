@@ -14,6 +14,10 @@ impl Config {
     pub fn channel_register_msg(&self) -> u64 {
         self.channel_register_msg
     }
+
+    pub fn token(&self) -> &str {
+        &self.token
+    }
 }
 
 
