@@ -25,10 +25,17 @@ const CONFIG_PATH: &str = ".config/config.toml";
 
 lazy_static::lazy_static! {
     pub static ref CONFIG: Config = {
-        let conf: Config = match confy::load_path(CONFIG_PATH) {
+        // Get specified path if any
+        let args: Vec<String> = std::env::args().collect();
+        let conf_path = if args.len() > 1 {
+            &args[1]
+        } else {
+            CONFIG_PATH
+        };
+        let conf: Config = match confy::load_path(conf_path) {
             Ok(conf) => conf,
             Err(err) => {
-                confy::store_path(CONFIG_PATH, Config::default()).unwrap();
+                confy::store_path(conf_path, Config::default()).unwrap();
                 panic!("Error while loading config, a config file must be specified to .config/config.toml: {err:?}");
             }
         };
