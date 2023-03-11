@@ -1,0 +1,3 @@
+admins = [] # List of user IDs ex: [123456789, 987654321]
+channel_register_msg = 1#<ID>#
+token = "<TOKEN>"

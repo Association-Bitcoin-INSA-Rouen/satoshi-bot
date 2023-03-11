@@ -1,5 +1,6 @@
 use std::env;
 
+use config::CONFIG;
 use serenity::async_trait;
 use serenity::model::prelude::{Reaction, ReactionType};
 use serenity::prelude::*;
@@ -7,6 +8,7 @@ use serenity::framework::standard::{StandardFramework, CommandResult};
 
 
 pub mod private_channel;
+pub mod config;
 
 struct General;
 
@@ -37,7 +39,7 @@ async fn main() {
         /*.configure(|c| c.prefix("!")) // set the bot's prefix to "!"
         .group(&GENERAL_GROUP); */
 
-    
+    CONFIG.clone();
     // Login with a bot token from the environment
     let token = env::var("DISCORD_TOKEN").expect("No token provided");
     let intents = GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT | GatewayIntents::GUILD_MESSAGE_REACTIONS;
